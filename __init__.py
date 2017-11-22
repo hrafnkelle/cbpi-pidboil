@@ -13,6 +13,7 @@ class PIDBoil(KettleController):
     c_d = Property.Number("D", True, 5, description="D Value of PID")
     d_max_out = Property.Number("max. output %", True, 100, description="Power which is set above boil threshold")
     e_boil = Property.Number("Boil Threshold", True, 80,description="Temperatre for Boil threshold. Full power mode!")
+    f_haspwm = Property.Select(label="Can actor do PWM?", options=('Yes','No'), description="Select YES if the heater is GPIOPWM")
 
     def stop(self):
         '''
@@ -32,6 +33,9 @@ class PIDBoil(KettleController):
         i = float(self.b_i)
         d = float(self.c_d)
         maxout = float(self.d_max_out)
+        hasPwm = False
+        if self.f_haspwm == 'Yes':
+            hasPwm = True
         pid = PIDArduino(sampleTime, p, i, d, 0, maxout)
 
         while self.is_running():
@@ -41,12 +45,16 @@ class PIDBoil(KettleController):
                 self.sleep(1)
             else:
                 heat_percent = pid.calc(self.get_temp(), self.get_target_temp())
-                heating_time = sampleTime * heat_percent / 100
-                wait_time = sampleTime - heating_time
-                self.heater_on(100)
-                self.sleep(heating_time)
-                self.heater_off()
-                self.sleep(wait_time)
+                if hasPwm:
+                    self.heater_on(heat_percent)
+                    self.sleep(sampleTime)
+                else:
+                    heating_time = sampleTime * heat_percent / 100
+                    wait_time = sampleTime - heating_time
+                    self.heater_on(100)
+                    self.sleep(heating_time)
+                    self.heater_off()
+                    self.sleep(wait_time)
 
 # Based on Arduino PID Library
 # See https://github.com/br3ttb/Arduino-PID-Library
