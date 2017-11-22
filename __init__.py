@@ -46,7 +46,7 @@ class PIDBoil(KettleController):
             else:
                 heat_percent = pid.calc(self.get_temp(), self.get_target_temp())
                 if hasPwm:
-                    self.heater_on(heat_percent)
+                    self.heater_on(round(heat_percent,2))
                     self.sleep(sampleTime)
                 else:
                     heating_time = sampleTime * heat_percent / 100
