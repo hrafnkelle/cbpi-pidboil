@@ -37,7 +37,7 @@ class PIDBoil(KettleController):
         while self.is_running():
 
             if self.get_target_temp() >= float(self.e_boil):
-                self.heater_on(100)
+                self.heater_on(maxout)
                 self.sleep(1)
             else:
                 heat_percent = pid.calc(self.get_temp(), self.get_target_temp())
